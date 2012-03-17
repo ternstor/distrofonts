@@ -9,7 +9,7 @@ It searches for package names that follow the
 [suggested](https://wiki.archlinux.org/index.php/Fonts) `ttf-fontname`
 pattern.
 
-Dependencies: ttf2png, makepkg.
+Dependencies: ttf2png, pacman (makepkg), imagemagick.
 
 The [source for archfonts](http://github.com/ternstor/archfonts) is
 available on GitHub, and released under the MIT license.
@@ -105,7 +105,7 @@ class ArchFontPackage(object):
 
         return ttf_paths
 
-    def to_png(self, ttf_paths):
+    def to_pngs(self, ttf_paths):
         """Transform ttf files to png and return these png file paths."""
 
         png_paths = []
@@ -121,6 +121,12 @@ class ArchFontPackage(object):
                 self.failed.append(ttf_path)
 
         return png_paths
+
+    def trim_pngs(self, png_paths):
+        """Trim generated PNGs using ImageMagick's convert."""
+
+        for png_path in png_paths:
+            subprocess.call(['convert', '-i', png_path, png_path])
 
 # === Output helper function ===
 
@@ -184,7 +190,8 @@ if __name__ == '__main__':
         # Extract the package we just made, find ttfs and dict' them.
         archfont.extract_pkg()
         ttf_paths = archfont.get_ttfs()
-        ttfs[pkg_name] = archfont.to_png(ttf_paths)
+        ttfs[pkg_name] = archfont.to_pngs(ttf_paths)
+        archfont.trim(ttfs[pkg_name])
 
     # Write using the html template.
     output(ttfs, args.output)
