@@ -51,7 +51,7 @@ class ArchFontPackage(object):
         self.pkg_name = os.path.basename(pkg_dir)
         self.pkg_dir = pkg_dir
         self.status = {}
-        self.err_file = open(err_filename, 'w')
+        self.err_file = open(err_filename, 'a')
         self.failed = []
 
         if os.path.exists(IGNORE_FILE):
@@ -59,6 +59,9 @@ class ArchFontPackage(object):
             self.ignore_list = list(map(lambda x: x.strip(), self.ignore_list))
         else:
             self.ignore_list = []
+
+    def __del__(self):
+        self.err_file.close()
 
     def copy(self, dest_dir):
         """Copy the package to a destination directory."""
@@ -98,9 +101,7 @@ class ArchFontPackage(object):
         ttf_paths = []
 
         for root, dirnames, filenames in os.walk(self.pkg_dir):
-
             for filename in fnmatch.filter(filenames, '*.ttf'):
-
                 ttf_paths.append(os.path.join(root, filename))
 
         return ttf_paths
@@ -126,7 +127,7 @@ class ArchFontPackage(object):
         """Trim generated PNGs using ImageMagick's convert."""
 
         for png_path in png_paths:
-            subprocess.call(['convert', '-i', png_path, png_path])
+            subprocess.call(['convert', '-trim', png_path, png_path])
 
 # === Output helper function ===
 
@@ -191,7 +192,7 @@ if __name__ == '__main__':
         archfont.extract_pkg()
         ttf_paths = archfont.get_ttfs()
         ttfs[pkg_name] = archfont.to_pngs(ttf_paths)
-        archfont.trim(ttfs[pkg_name])
+        archfont.trim_pngs(ttfs[pkg_name])
 
     # Write using the html template.
     output(ttfs, args.output)
