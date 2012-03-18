@@ -11,8 +11,11 @@ available on GitHub, and released under the MIT license.
 
 * AUR: [online](http://ternstor.github.com/archfonts/aur.html),
 [gzip](http://ternstor.github.com/archfonts/aur.tar.gz).
-* ABS: [online](http://ternstor.github.com/archfonts/abs.html),
-[gzip](http://ternstor.github.com/archfonts/abs.tar.gz).
+* ABS: 
+    * Community: [online](http://ternstor.github.com/archfonts/community.html),
+    [gzip](http://ternstor.github.com/archfonts/community.tar.gz).
+    * Extra: [gzip](http://ternstor.github.com/archfonts/extra.tar.gz),
+    [gzip](http://ternstor.github.com/archfonts/extra.html)
 
 ## Dependencies
 
