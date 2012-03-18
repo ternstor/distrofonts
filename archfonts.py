@@ -5,9 +5,8 @@ Archfonts is a script and module to generate PNG images from TTF fonts
 found in [Archlinux](http://www.archlinux.org/) AUR or ABS source
 trees.
 
-It searches for package names that follow the
-[suggested](https://wiki.archlinux.org/index.php/Fonts) `ttf-fontname`
-pattern.
+Prebuilt indexes: [AUR](http://ternstor.github.com/archfonts/aur.html),
+[ABS](http://ternstor.github.com/archfonts/abs.html)
 
 Dependencies: ttf2png, pacman (makepkg), imagemagick.
 

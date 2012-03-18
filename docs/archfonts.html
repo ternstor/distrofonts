@@ -21,10 +21,9 @@
       <p>Archfonts is a script and module to generate PNG images from TTF fonts
 found in <a href="http://www.archlinux.org/">Archlinux</a> AUR or ABS source
 trees.</p>
-<p>It searches for package names that follow the
-<a href="https://wiki.archlinux.org/index.php/Fonts">suggested</a> <code>ttf-fontname</code>
-pattern.</p>
-<p>Dependencies: ttf2png, makepkg.</p>
+<p>Prebuilt indexes: <a href="http://ternstor.github.com/archfonts/aur.html">AUR</a>,
+<a href="http://ternstor.github.com/archfonts/abs.html">ABS</a></p>
+<p>Dependencies: ttf2png, pacman (makepkg), imagemagick.</p>
 <p>The <a href="http://github.com/ternstor/archfonts">source for archfonts</a> is
 available on GitHub, and released under the MIT license.</p>
     </div>
@@ -142,7 +141,7 @@ possible other files, as specified by ABS and AUR.</p>
       <div class="highlight"><pre>        <span class="bp">self</span><span class="o">.</span><span class="n">pkg_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">pkg_dir</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pkg_dir</span> <span class="o">=</span> <span class="n">pkg_dir</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">err_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">err_filename</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">err_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">err_filename</span><span class="p">,</span> <span class="s">&#39;a&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">failed</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">IGNORE_FILE</span><span class="p">):</span>
@@ -158,10 +157,11 @@ possible other files, as specified by ABS and AUR.</p>
       <div class='octowrap'>
         <a class='octothorpe' href='#section-9'>#</a>
       </div>
-      <p>Copy the package to a destination directory.</p>
+      
     </div>
     <div class='code'>
-      <div class="highlight"><pre>    <span class="k">def</span> <span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dest_dir</span><span class="p">):</span></pre></div>
+      <div class="highlight"><pre>    <span class="k">def</span> <span class="nf">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">err_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></pre></div>
     </div>
   </div>
   <div class='clearall'></div>
@@ -169,6 +169,18 @@ possible other files, as specified by ABS and AUR.</p>
     <div class='docs'>
       <div class='octowrap'>
         <a class='octothorpe' href='#section-10'>#</a>
+      </div>
+      <p>Copy the package to a destination directory.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">def</span> <span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dest_dir</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-11'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-11'>#</a>
       </div>
       
     </div>
@@ -182,10 +194,10 @@ possible other files, as specified by ABS and AUR.</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-11'>
+  <div class='section' id='section-12'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-11'>#</a>
+        <a class='octothorpe' href='#section-12'>#</a>
       </div>
       <p>Add a package to an ignore list and ignore file.</p>
     </div>
@@ -194,10 +206,10 @@ possible other files, as specified by ABS and AUR.</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-12'>
+  <div class='section' id='section-13'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-12'>#</a>
+        <a class='octothorpe' href='#section-13'>#</a>
       </div>
       
     </div>
@@ -207,10 +219,10 @@ possible other files, as specified by ABS and AUR.</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-13'>
+  <div class='section' id='section-14'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-13'>#</a>
+        <a class='octothorpe' href='#section-14'>#</a>
       </div>
       <p>Build the package and return the exit code.</p>
     </div>
@@ -219,10 +231,10 @@ possible other files, as specified by ABS and AUR.</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-14'>
+  <div class='section' id='section-15'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-14'>#</a>
+        <a class='octothorpe' href='#section-15'>#</a>
       </div>
       
     </div>
@@ -232,10 +244,10 @@ possible other files, as specified by ABS and AUR.</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-15'>
+  <div class='section' id='section-16'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-15'>#</a>
+        <a class='octothorpe' href='#section-16'>#</a>
       </div>
       <p>Uncompress the package and return the exit code.</p>
     </div>
@@ -244,10 +256,10 @@ possible other files, as specified by ABS and AUR.</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-16'>
+  <div class='section' id='section-17'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-16'>#</a>
+        <a class='octothorpe' href='#section-17'>#</a>
       </div>
       
     </div>
@@ -262,10 +274,10 @@ possible other files, as specified by ABS and AUR.</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-17'>
+  <div class='section' id='section-18'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-17'>#</a>
+        <a class='octothorpe' href='#section-18'>#</a>
       </div>
       <p>Return list of ttf file paths found for the package.</p>
     </div>
@@ -274,10 +286,10 @@ possible other files, as specified by ABS and AUR.</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-18'>
+  <div class='section' id='section-19'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-18'>#</a>
+        <a class='octothorpe' href='#section-19'>#</a>
       </div>
       
     </div>
@@ -285,24 +297,10 @@ possible other files, as specified by ABS and AUR.</p>
       <div class="highlight"><pre>        <span class="n">ttf_paths</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="k">for</span> <span class="n">root</span><span class="p">,</span> <span class="n">dirnames</span><span class="p">,</span> <span class="n">filenames</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pkg_dir</span><span class="p">):</span>
-
             <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">fnmatch</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">filenames</span><span class="p">,</span> <span class="s">&#39;*.ttf&#39;</span><span class="p">):</span>
-
                 <span class="n">ttf_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">filename</span><span class="p">))</span>
 
         <span class="k">return</span> <span class="n">ttf_paths</span></pre></div>
-    </div>
-  </div>
-  <div class='clearall'></div>
-  <div class='section' id='section-19'>
-    <div class='docs'>
-      <div class='octowrap'>
-        <a class='octothorpe' href='#section-19'>#</a>
-      </div>
-      <p>Transform ttf files to png and return these png file paths.</p>
-    </div>
-    <div class='code'>
-      <div class="highlight"><pre>    <span class="k">def</span> <span class="nf">to_png</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ttf_paths</span><span class="p">):</span></pre></div>
     </div>
   </div>
   <div class='clearall'></div>
@@ -310,6 +308,18 @@ possible other files, as specified by ABS and AUR.</p>
     <div class='docs'>
       <div class='octowrap'>
         <a class='octothorpe' href='#section-20'>#</a>
+      </div>
+      <p>Transform ttf files to png and return these png file paths.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">def</span> <span class="nf">to_pngs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ttf_paths</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-21'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-21'>#</a>
       </div>
       
     </div>
@@ -330,10 +340,35 @@ possible other files, as specified by ABS and AUR.</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-21'>
+  <div class='section' id='section-22'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-21'>#</a>
+        <a class='octothorpe' href='#section-22'>#</a>
+      </div>
+      <p>Trim generated PNGs using ImageMagick's convert.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">def</span> <span class="nf">trim_pngs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">png_paths</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-23'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-23'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>        <span class="k">for</span> <span class="n">png_path</span> <span class="ow">in</span> <span class="n">png_paths</span><span class="p">:</span>
+            <span class="n">subprocess</span><span class="o">.</span><span class="n">call</span><span class="p">([</span><span class="s">&#39;convert&#39;</span><span class="p">,</span> <span class="s">&#39;-trim&#39;</span><span class="p">,</span> <span class="n">png_path</span><span class="p">,</span> <span class="n">png_path</span><span class="p">])</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-24'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-24'>#</a>
       </div>
       <h3><span id="output-helper-function" href="output-helper-function"> Output helper function </span></h3>
     </div>
@@ -342,10 +377,10 @@ possible other files, as specified by ABS and AUR.</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-22'>
+  <div class='section' id='section-25'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-22'>#</a>
+        <a class='octothorpe' href='#section-25'>#</a>
       </div>
       <p>Write output file using pkg -&gt; path dictionary.</p>
     </div>
@@ -354,10 +389,10 @@ possible other files, as specified by ABS and AUR.</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-23'>
+  <div class='section' id='section-26'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-23'>#</a>
+        <a class='octothorpe' href='#section-26'>#</a>
       </div>
       
     </div>
@@ -375,10 +410,10 @@ possible other files, as specified by ABS and AUR.</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-24'>
+  <div class='section' id='section-27'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-24'>#</a>
+        <a class='octothorpe' href='#section-27'>#</a>
       </div>
       <h3><span id="main-execution" href="main-execution"> Main execution </span></h3>
     </div>
@@ -387,10 +422,10 @@ possible other files, as specified by ABS and AUR.</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-25'>
+  <div class='section' id='section-28'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-25'>#</a>
+        <a class='octothorpe' href='#section-28'>#</a>
       </div>
       <p><strong>TODO:</strong> Get output filename and stderr output file.</p>
     </div>
@@ -410,10 +445,10 @@ possible other files, as specified by ABS and AUR.</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-26'>
+  <div class='section' id='section-29'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-26'>#</a>
+        <a class='octothorpe' href='#section-29'>#</a>
       </div>
       <p>Get all ttf packages from the AUR clone.</p>
     </div>
@@ -427,10 +462,10 @@ possible other files, as specified by ABS and AUR.</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-27'>
+  <div class='section' id='section-30'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-27'>#</a>
+        <a class='octothorpe' href='#section-30'>#</a>
       </div>
       <p>Ignore the package if it failed previously.
 This avoids extra work in multiple runs.</p>
@@ -441,10 +476,10 @@ This avoids extra work in multiple runs.</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-28'>
+  <div class='section' id='section-31'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-28'>#</a>
+        <a class='octothorpe' href='#section-31'>#</a>
       </div>
       <p>Copy to our build directory</p>
     </div>
@@ -454,10 +489,10 @@ This avoids extra work in multiple runs.</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-29'>
+  <div class='section' id='section-32'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-29'>#</a>
+        <a class='octothorpe' href='#section-32'>#</a>
       </div>
       <p>Try to make the package, add to ignore list if it fails.</p>
     </div>
@@ -470,24 +505,25 @@ This avoids extra work in multiple runs.</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-30'>
+  <div class='section' id='section-33'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-30'>#</a>
+        <a class='octothorpe' href='#section-33'>#</a>
       </div>
       <p>Extract the package we just made, find ttfs and dict' them.</p>
     </div>
     <div class='code'>
       <div class="highlight"><pre>        <span class="n">archfont</span><span class="o">.</span><span class="n">extract_pkg</span><span class="p">()</span>
         <span class="n">ttf_paths</span> <span class="o">=</span> <span class="n">archfont</span><span class="o">.</span><span class="n">get_ttfs</span><span class="p">()</span>
-        <span class="n">ttfs</span><span class="p">[</span><span class="n">pkg_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">archfont</span><span class="o">.</span><span class="n">to_png</span><span class="p">(</span><span class="n">ttf_paths</span><span class="p">)</span></pre></div>
+        <span class="n">ttfs</span><span class="p">[</span><span class="n">pkg_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">archfont</span><span class="o">.</span><span class="n">to_pngs</span><span class="p">(</span><span class="n">ttf_paths</span><span class="p">)</span>
+        <span class="n">archfont</span><span class="o">.</span><span class="n">trim_pngs</span><span class="p">(</span><span class="n">ttfs</span><span class="p">[</span><span class="n">pkg_name</span><span class="p">])</span></pre></div>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-31'>
+  <div class='section' id='section-34'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-31'>#</a>
+        <a class='octothorpe' href='#section-34'>#</a>
       </div>
       <p>Write using the html template.</p>
     </div>
