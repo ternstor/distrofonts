@@ -4,18 +4,18 @@ Archfonts is a script and module to generate PNG images from TTF fonts
 found in [Archlinux](http://www.archlinux.org/) AUR or ABS source
 trees.
 
-The [source for archfonts](http://github.com/ternstor/archfonts) is
+The [source for archfonts](http://github.com/ternstor/distrofonts) is
 available on GitHub, and released under the MIT license.
 
 ## Prebuilt indexes
 
-* AUR: [online](http://ternstor.github.com/archfonts/aur.html),
-[gzip](http://ternstor.github.com/archfonts/aur.tar.gz).
+* AUR: [online](http://ternstor.github.com/distrofonts/aur.html),
+[gzip](http://ternstor.github.com/distrofonts/aur.tar.gz).
 * ABS: 
-    * Community: [online](http://ternstor.github.com/archfonts/community.html),
-    [gzip](http://ternstor.github.com/archfonts/community.tar.gz).
-    * Extra: [online](http://ternstor.github.com/archfonts/extra.html),
-    [gzip](http://ternstor.github.com/archfonts/extra.tar.gz).
+    * Community: [online](http://ternstor.github.com/distrofonts/community.html),
+    [gzip](http://ternstor.github.com/distrofonts/community.tar.gz).
+    * Extra: [online](http://ternstor.github.com/distrofonts/extra.html),
+    [gzip](http://ternstor.github.com/distrofonts/extra.tar.gz).
 
 ## Dependencies
 
