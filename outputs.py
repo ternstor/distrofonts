@@ -3,10 +3,11 @@ import os.path
 import sys
 import shutil
 
+
 def html(ttfs):
-    out = ''
+    out = ""
     here = sys.path[0]
-    dest_png_path = os.path.join(here, 'png')
+    dest_png_path = os.path.join(here, "png")
     try:
         os.mkdir(dest_png_path)
     except OSError:
@@ -19,14 +20,22 @@ def html(ttfs):
         except OSError:
             pass
 
-        out += '<h3>{}</h3><p><ul>'.format(pkg_name)
+        out += "<h3>{}</h3><p><ul>".format(pkg_name)
         for png_path in png_paths:
             shutil.copy(png_path, png_pkg_path)
             base_name = os.path.basename(png_path)
             out_str = '<li>{}<br><img src="{}"></li>'
-            out_str = out_str.format(base_name, os.path.join(png_pkg_path, base_name))
+
+            if False:  # local
+                path = os.path.join(png_pkg_path, base_name)
+                out_str = out_str.format(base_name, path)
+            else:
+                path = f"http://localhost:8000/png/{pkg_name}/{base_name}"
+                out_str = out_str.format(base_name, path)
+
+            out_str = out_str.format(base_name, path)
             out += out_str
 
-        out += '</ul></p>'
+        out += "</ul></p>"
 
     return out

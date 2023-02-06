@@ -28,19 +28,32 @@ import subprocess
 import fnmatch
 import sys
 import argparse
+import logging
+from typing import List, Dict
 
 import outputs
 
 from string import Template
 
-# **makepkg** options: force, syncdeps, clean, ignore arch, no colors.
-MAKEPKG_CMD = ['makepkg', '-f', '-s', '-c', '-A', '--nocolor']
+MAKEPKG_CMD = [
+    "makepkg",
+    "--force",
+    "--syncdeps",
+    "--ignorearch",
+    "--nocolor",
+    "--noconfirm",
+    "--skipchecksums",
+    "--skipinteg",
+    "--skippgpcheck",
+]
+# Never add --clean.
+
 # **ttf2png** options: font size 20 px.
-TTF2PNG_CMD = ['ttf2png', '-s', '20']
+TTF2PNG_CMD = ["ttf2png", "-s", "20"]
 
-IGNORE_FILE = os.path.join(sys.path[0], 'ignore.txt')
+IGNORE_FILE = os.path.join(sys.path[0], "ignore.txt")
+IGNORE_LIST = ["ttf-win10"]
 
-# === Archlinux Font Package Class ===
 
 class ArchFontPackage(object):
 
@@ -51,30 +64,41 @@ class ArchFontPackage(object):
     possible other files, as specified by ABS and AUR.
     """
 
-    def __init__(self, pkg_dir, err_filename='makepkg.stderr.log'):
+    def __init__(self, pkg_dir):
         """Initialize package directories and ignore list."""
 
         self.pkg_name = os.path.basename(pkg_dir)
         self.pkg_dir = pkg_dir
-        self.status = {}
-        self.err_file = open(err_filename, 'a')
         self.failed = []
+        self.logger = logging.getLogger(self.pkg_name)
 
         if os.path.exists(IGNORE_FILE):
-            self.ignore_list = open(IGNORE_FILE).readlines()
-            self.ignore_list = list(map(lambda x: x.strip(), self.ignore_list))
+            with open(IGNORE_FILE) as ignore_file:
+                self.ignore_list = ignore_file.readlines()
+                self.ignore_list = list(map(lambda x: x.strip(), self.ignore_list))
+                self.ignore_list = IGNORE_LIST + self.ignore_list
         else:
             self.ignore_list = []
 
-    def __del__(self):
-        self.err_file.close()
+    def _run(self, command):
+        process = subprocess.run(command, capture_output=True)
+
+        if process.stderr and process.returncode:
+            self.logger.error(
+                "Error running '%s' for '%s':\n%s\n",
+                " ".join(command),
+                self.pkg_name,
+                process.stderr,
+            )
+
+        return process.returncode
 
     def copy(self, dest_dir):
         """Copy the package to a destination directory."""
 
         try:
             shutil.copytree(self.pkg_dir, dest_dir)
-        except: # error 17 mkdir
+        except:  # error 17 mkdir
             pass
 
         self.pkg_dir = dest_dir
@@ -82,22 +106,22 @@ class ArchFontPackage(object):
     def ignore_pkg(self):
         """Add a package to an ignore list and ignore file."""
 
-        with open(IGNORE_FILE, 'a') as ignore_file:
-            ignore_file.write(self.pkg_name + '\n')
+        with open(IGNORE_FILE, "a") as ignore_file:
+            ignore_file.write(self.pkg_name + "\n")
 
     def make_pkg(self):
         """Build the package and return the exit code."""
         os.chdir(self.pkg_dir)
-        return subprocess.call(MAKEPKG_CMD, stderr=self.err_file)
+        return self._run(MAKEPKG_CMD)
 
     def extract_pkg(self):
         """Uncompress the package and return the exit code."""
 
-        xz_pkgs = glob.glob(os.path.join(self.pkg_dir, '*.tar.xz'))
+        xz_pkgs = glob.glob(os.path.join(self.pkg_dir, "*.tar.xz"))
 
         if xz_pkgs:
             os.chdir(self.pkg_dir)
-            return subprocess.call(['tar', '-Jxf', xz_pkgs[0]])
+            return self._run(["tar", "-Jxf", xz_pkgs[0]])
         else:
             return False
 
@@ -106,10 +130,9 @@ class ArchFontPackage(object):
 
         ttf_paths = []
 
-        for root, dirnames, filenames in os.walk(self.pkg_dir):
-            for filename in fnmatch.filter(filenames, '*.ttf'):
+        for root, _, filenames in os.walk(self.pkg_dir):
+            for filename in fnmatch.filter(filenames, "*.ttf"):
                 ttf_paths.append(os.path.join(root, filename))
-
         return ttf_paths
 
     def to_pngs(self, ttf_paths):
@@ -118,10 +141,10 @@ class ArchFontPackage(object):
         png_paths = []
 
         for ttf_path in ttf_paths:
-            output_png = ttf_path + '.png'
+            output_png = ttf_path + ".png"
             command = TTF2PNG_CMD[:]
-            command.extend(['-o', output_png, ttf_path])
-            ret_code = subprocess.call(command)
+            command.extend(["-o", output_png, ttf_path])
+            ret_code = self._run(command)
             if ret_code == 0:
                 png_paths.append(output_png)
             else:
@@ -133,47 +156,60 @@ class ArchFontPackage(object):
         """Trim generated PNGs using ImageMagick's convert."""
 
         for png_path in png_paths:
-            subprocess.call(['convert', '-trim', png_path, png_path])
+            self._run(["convert", "-trim", png_path, png_path])
 
-# === Output helper function ===
 
-def output(ttfs, output_format):
+def output(
+    ttfs: Dict[str, List[str]],
+    output_format: str,
+):
     """Write output file using pkg -> path dictionary."""
     here = sys.path[0]
-    tpl_path = os.path.join('templates', output_format)
-    abs_tpl_path = os.path.join(here, tpl_path)
+    tpl_path = os.path.join("templates", output_format)
     output_func = getattr(outputs, output_format)
 
-    tpl_content = open(abs_tpl_path).read()
-    output_dict = {'content': output_func(ttfs),
-                   'source_dir': args.source_dir}
-    html = Template(tpl_content).substitute(output_dict)
-    open(os.path.join(here, 'out.html'), 'w').write(html)
+    output_dict = {"content": output_func(ttfs), "source_dir": args.source_dir}
 
-# === Main execution ===
+    with open(os.path.join(here, tpl_path)) as tpl_file, open(
+        os.path.join(here, "out.html"), "w"
+    ) as output_html_file:
 
-if __name__ == '__main__':
+        tpl_content = open(tpl_file).read()
+        html = Template(tpl_content).substitute(output_dict)
+        output_html_file.write(html)
 
-    # **TODO:** Get output filename and stderr output file.
+
+if __name__ == "__main__":
+
+    logging.basicConfig(level=logging.INFO)
 
     parser = argparse.ArgumentParser(
-                        description='Build PNG files from TTF packages in AUR.')
-    parser.add_argument('-o', '--output', type=str,
-                        default='html', help='output type')
-    parser.add_argument('-s', '--source-dir', type=str,
-                        default='/var/aur',
-                        help='directory where ABS/AUR packages live')
-    parser.add_argument('-b', '--build-dir', type=str,
-                        default='/tmp/archfonts',
-                        help='directory where packages will be copied/built')
+        description="Build PNG files from TTF packages in AUR."
+    )
+    parser.add_argument("-o", "--output", type=str, default="html", help="output type")
+    parser.add_argument(
+        "-s",
+        "--source-dir",
+        type=str,
+        default="/var/aur",
+        help="directory where ABS/AUR packages live",
+    )
+    parser.add_argument(
+        "-b",
+        "--build-dir",
+        type=str,
+        default="/tmp/archfonts",
+        help="directory where packages will be copied/built",
+    )
 
     args = parser.parse_args()
 
     # Get all ttf packages from the AUR clone.
-    pkg_dirs = glob.glob(os.path.join(args.source_dir, 'ttf-*'))
+    pkg_dirs = glob.glob(os.path.join(args.source_dir, "ttf-*"))[:4]
     ttfs = {}
+    n = len(pkg_dirs)
 
-    for pkg_dir in pkg_dirs:
+    for i, pkg_dir in enumerate(pkg_dirs):
         archfont = ArchFontPackage(pkg_dir)
         pkg_name = archfont.pkg_name
 
@@ -181,6 +217,7 @@ if __name__ == '__main__':
         # This avoids extra work in multiple runs.
 
         if pkg_name in archfont.ignore_list:
+            logging.info("[%d/%d] Ignoring %s", i, n, pkg_name)
             continue
 
         # Copy to our build directory
@@ -188,10 +225,12 @@ if __name__ == '__main__':
         archfont.copy(pkg_dir)
 
         # Try to make the package, add to ignore list if it fails.
+        logging.info("[%d/%d] Processing %s", i, n, pkg_name)
         ret_code = archfont.make_pkg()
 
         if ret_code != 0:
             archfont.ignore_pkg()
+            logging.info("[%d/%d] Adding %s to %s", i, n, pkg_name, IGNORE_FILE)
             continue
 
         # Extract the package we just made, find ttfs and dict' them.
