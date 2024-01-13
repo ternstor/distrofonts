@@ -34,7 +34,7 @@ import outputs
 from string import Template
 
 # **makepkg** options: force, syncdeps, clean, ignore arch, no colors.
-MAKEPKG_CMD = ['makepkg', '-f', '-s', '-c', '-A', '--nocolor']
+MAKEPKG_CMD = ['makepkg', '-f', '-s', '-c', '-A', '--nocolor', '--noconfirm']
 # **ttf2png** options: font size 20 px.
 TTF2PNG_CMD = ['ttf2png', '-s', '20']
 
@@ -170,7 +170,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Get all ttf packages from the AUR clone.
-    pkg_dirs = glob.glob(os.path.join(args.source_dir, 'ttf-*'))
+    pkg_dirs = glob.glob(os.path.join(args.source_dir, 'ttf-ar*'))
     ttfs = {}
 
     for pkg_dir in pkg_dirs:
