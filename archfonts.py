@@ -7,13 +7,13 @@ trees.
 
 Prebuilt indexes:
 
-* AUR: [online](http://ternstor.github.com/archfonts/aur.html),
-[gzip](http://ternstor.github.com/archfonts/aur.tar.gz).
+* AUR: [online](http://ternstor.github.io/archfonts/aur.html),
+[gzip](http://ternstor.github.io/archfonts/aur.tar.gz).
 * ABS:
-    * Community: [online](http://ternstor.github.com/archfonts/community.html),
-    [gzip](http://ternstor.github.com/archfonts/community.tar.gz).
-    * Extra: [online](http://ternstor.github.com/archfonts/extra.html)
-    [gzip](http://ternstor.github.com/archfonts/extra.tar.gz).
+    * Community: [online](http://ternstor.github.io/archfonts/community.html),
+    [gzip](http://ternstor.github.io/archfonts/community.tar.gz).
+    * Extra: [online](http://ternstor.github.io/archfonts/extra.html)
+    [gzip](http://ternstor.github.io/archfonts/extra.tar.gz).
 
 Dependencies: ttf2png, pacman (makepkg), imagemagick.
 

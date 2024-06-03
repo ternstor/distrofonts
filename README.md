@@ -9,13 +9,13 @@ available on GitHub, and released under the MIT license.
 
 ## Prebuilt indexes
 
-* AUR: [online](http://ternstor.github.com/distrofonts/aur.html),
-[gzip](http://ternstor.github.com/distrofonts/aur.tar.gz).
+* AUR: [online](http://ternstor.github.io/distrofonts/aur.html),
+[gzip](http://ternstor.github.io/distrofonts/aur.tar.gz).
 * ABS: 
-    * Community: [online](http://ternstor.github.com/distrofonts/community.html),
-    [gzip](http://ternstor.github.com/distrofonts/community.tar.gz).
-    * Extra: [online](http://ternstor.github.com/distrofonts/extra.html),
-    [gzip](http://ternstor.github.com/distrofonts/extra.tar.gz).
+    * Community: [online](http://ternstor.github.io/distrofonts/community.html),
+    [gzip](http://ternstor.github.io/distrofonts/community.tar.gz).
+    * Extra: [online](http://ternstor.github.io/distrofonts/extra.html),
+    [gzip](http://ternstor.github.io/distrofonts/extra.tar.gz).
 
 ## Dependencies
 
