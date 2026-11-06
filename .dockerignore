@@ -1,0 +1,11 @@
+.git
+.venv
+dist
+aur
+.pages
+**/__pycache__
+.pytest_cache
+.ruff_cache
+*.pyc
+*.egg-info
+docs

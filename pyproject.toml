@@ -1,0 +1,41 @@
+[project]
+name = "archfonts"
+version = "1.0.0"
+description = "Build PNG previews from Arch Linux TTF font packages."
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Thomas Ernstorfer" }]
+dependencies = []
+
+[project.scripts]
+archfonts = "archfonts.cli:main"
+archfonts-fetch = "archfonts.fetch:main"
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8",
+  "ruff>=0.8",
+]
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+archfonts = ["templates/*.html"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

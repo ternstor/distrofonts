@@ -1,41 +1,39 @@
-FROM archlinux:latest
+FROM archlinux:base-devel
 
-RUN pacman -Sy --noconfirm \
-    python \
-    fakeroot binutils sudo make \
-    gcc patch pkgconf \
-    imagemagick
+# Pacman's seccomp sandbox fails under qemu on Apple Silicon.
+RUN echo "DisableSandbox" >> /etc/pacman.conf \
+    && pacman -Syu --noconfirm --disable-sandbox \
+        python \
+        python-pip \
+        imagemagick \
+        git \
+        sudo \
+    && useradd --create-home --shell /bin/bash builder \
+    && echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers \
+    && mkdir -p /opt/distrofonts /output \
+    && chown builder:builder /opt/distrofonts /output \
+    && printf '%s\n' \
+        "DLAGENT=('http::/usr/bin/curl -qgC - -fL --retry 10 --retry-delay 2 --retry-all-errors -o %o %u'" \
+        "         'https::/usr/bin/curl -qgC - -fL --retry 10 --retry-delay 2 --retry-all-errors -o %o %u'" \
+        "         'ftp::/usr/bin/curl -qgC - -fL --retry 10 --retry-delay 2 --retry-all-errors -o %o %u')" \
+        >> /etc/makepkg.conf
 
-# COPY pkgs/ /var/aur
-RUN mkdir /var/aur /opt/distrofonts && \
-    chown -R nobody:nobody /var/aur && \
-    chown -R nobody:nobody /opt/distrofonts && \
-    echo "nobody ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+USER builder
+WORKDIR /home/builder
 
-USER nobody
-WORKDIR /tmp
+RUN git clone --depth 1 https://aur.archlinux.org/ttf2png.git \
+    && cd ttf2png \
+    && makepkg --syncdeps --install --noconfirm \
+    && cd /home/builder \
+    && rm -rf ttf2png
 
-RUN curl -s https://aur.archlinux.org/cgit/aur.git/snapshot/aurutils.tar.gz | tar -zx && \
-    cd aurutils && \
-    makepkg --syncdeps --install --clean --noconfirm
+USER root
+COPY --chown=builder:builder . /opt/distrofonts
+RUN python -m venv /opt/venv \
+    && /opt/venv/bin/pip install --no-cache-dir /opt/distrofonts
 
-RUN curl -s https://aur.archlinux.org/cgit/aur.git/snapshot/ttf2png.tar.gz | tar -zx && \
-    cd ttf2png && \
-    makepkg --syncdeps --install --clean --noconfirm
-
-RUN curl -s https://aur.archlinux.org/cgit/aur.git/snapshot/xorg-font-utils.tar.gz | tar -zx && \
-    cd xorg-font-utils && \
-    makepkg --syncdeps --install --clean --noconfirm
-
-COPY --chown=nobody:nobody . /opt/distrofonts
+USER builder
 WORKDIR /opt/distrofonts
-
-COPY pkgs/ /var/aur
-
-# RUN chown -R nobody:nobody /aurutils
-# USER root
-# RUN pacman -U aurutils-10b-1-any.pkg.tar.zst
-
-CMD ["/bin/bash"]
-
-# python3 -m http.server 8000
+ENV PATH="/opt/venv/bin:${PATH}"
+ENTRYPOINT ["archfonts"]
+CMD ["--help"]
