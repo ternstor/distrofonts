@@ -2,16 +2,19 @@ from pathlib import Path
 
 import pytest
 
-from archfonts.cli import parse_args, run
-from archfonts.package import ArchFontError, ArchFontPackage
+from distrofonts.cli import parse_generate_args
+from distrofonts.pipeline import run
+from distrofonts.process import FontError
+from distrofonts.ranking import RankedPackage, write_ranking
 
 
 def test_parse_args_defaults() -> None:
-    config = parse_args([])
+    config = parse_generate_args([])
+    assert config.distro.name == "archlinux"
     assert config.source_dir == Path("/var/aur")
-    assert config.build_dir == Path("/tmp/archfonts")
-    assert config.output_dir == Path("dist")
-    assert config.ignore_file == Path("ignore.txt")
+    assert config.build_dir == Path("/tmp/distrofonts")
+    assert config.output_dir == Path("dist/archlinux")
+    assert config.ignore_file == Path("ignore/archlinux.txt")
     assert config.output_format == "html"
     assert config.limit is None
     assert config.target == 100
@@ -22,8 +25,16 @@ def test_parse_args_defaults() -> None:
     assert config.skip_integrity is False
 
 
+def test_parse_args_debian_defaults() -> None:
+    config = parse_generate_args(["--distro", "debian"])
+    assert config.distro.name == "debian"
+    assert config.source_dir == Path("/var/debian")
+    assert config.output_dir == Path("dist/debian")
+    assert config.ignore_file == Path("ignore/debian.txt")
+
+
 def test_parse_args_flags() -> None:
-    config = parse_args(
+    config = parse_generate_args(
         [
             "--source-dir",
             "/aur",
@@ -60,24 +71,29 @@ def test_parse_args_flags() -> None:
     assert config.skip_integrity is True
 
 
-def _patch_build(monkeypatch: pytest.MonkeyPatch, source: Path, png: Path) -> None:
-    def fake_build(package: ArchFontPackage) -> int:
-        if package.pkg_name == "ttf-bad":
-            return 1
-        return 0
+def _patch_pipeline(
+    monkeypatch: pytest.MonkeyPatch, config, source: Path, png: Path
+) -> None:
+    def fake_materialize(
+        name: str,
+        source_dir: Path,
+        build_dir: Path,
+        *,
+        skip_integrity: bool = False,
+    ) -> Path:
+        del source_dir, build_dir, skip_integrity
+        if name == "ttf-bad":
+            raise FontError("makepkg failed")
+        if name == "ttf-broken":
+            raise FontError("no package archive")
+        return source / name
 
-    def fake_extract(package: ArchFontPackage) -> None:
-        if package.pkg_name == "ttf-broken":
-            raise ArchFontError("no package archive")
-
-    def fake_find(package: ArchFontPackage) -> list[Path]:
-        return [source / package.pkg_name / "font.ttf"]
-
-    monkeypatch.setattr("archfonts.package.ArchFontPackage.build", fake_build)
-    monkeypatch.setattr("archfonts.package.ArchFontPackage.extract", fake_extract)
-    monkeypatch.setattr("archfonts.package.ArchFontPackage.find_ttfs", fake_find)
-    monkeypatch.setattr("archfonts.cli.render_ttf", lambda ttf, font_size: png)
-    monkeypatch.setattr("archfonts.cli.trim_png", lambda path: None)
+    monkeypatch.setattr(config.distro, "materialize", fake_materialize)
+    monkeypatch.setattr(
+        config.distro, "find_ttfs", lambda extracted: [extracted / "font.ttf"]
+    )
+    monkeypatch.setattr("distrofonts.pipeline.render_ttf", lambda ttf, font_size: png)
+    monkeypatch.setattr("distrofonts.pipeline.trim_png", lambda path: None)
 
 
 def test_run_writes_index_and_failures(
@@ -104,9 +120,8 @@ def test_run_writes_index_and_failures(
     original_ignore = ignore.read_text(encoding="utf-8")
     png = tmp_path / "preview.ttf.png"
     png.write_bytes(b"png")
-    _patch_build(monkeypatch, source, png)
 
-    config = parse_args(
+    config = parse_generate_args(
         [
             "--source-dir",
             str(source),
@@ -120,6 +135,7 @@ def test_run_writes_index_and_failures(
             "2",
         ]
     )
+    _patch_pipeline(monkeypatch, config, source, png)
     assert run(config) == 0
 
     index = (tmp_path / "dist" / "index.html").read_text(encoding="utf-8")
@@ -129,6 +145,7 @@ def test_run_writes_index_and_failures(
     assert "ttf-broken" not in index
     assert "ttf-skip" not in index
     assert "ttf-win10" not in index
+    assert "<title>Arch fonts</title>" in index
     failures = (tmp_path / "dist" / "failures.txt").read_text(encoding="utf-8")
     assert failures == "ttf-bad\nttf-broken\n"
     assert ignore.read_text(encoding="utf-8") == original_ignore
@@ -156,20 +173,7 @@ def test_run_resumes_and_fills_target(
     png.write_bytes(b"png")
     built: list[str] = []
 
-    def fake_build(package: ArchFontPackage) -> int:
-        built.append(package.pkg_name)
-        return 1 if package.pkg_name == "ttf-bad" else 0
-
-    monkeypatch.setattr("archfonts.package.ArchFontPackage.build", fake_build)
-    monkeypatch.setattr("archfonts.package.ArchFontPackage.extract", lambda self: None)
-    monkeypatch.setattr(
-        "archfonts.package.ArchFontPackage.find_ttfs",
-        lambda self: [source / self.pkg_name / "font.ttf"],
-    )
-    monkeypatch.setattr("archfonts.cli.render_ttf", lambda ttf, font_size: png)
-    monkeypatch.setattr("archfonts.cli.trim_png", lambda path: None)
-
-    config = parse_args(
+    config = parse_generate_args(
         [
             "--source-dir",
             str(source),
@@ -184,6 +188,27 @@ def test_run_resumes_and_fills_target(
             "--resume",
         ]
     )
+
+    def fake_materialize(
+        name: str,
+        source_dir: Path,
+        build_dir: Path,
+        *,
+        skip_integrity: bool = False,
+    ) -> Path:
+        del source_dir, build_dir, skip_integrity
+        built.append(name)
+        if name == "ttf-bad":
+            raise FontError("makepkg failed")
+        return source / name
+
+    monkeypatch.setattr(config.distro, "materialize", fake_materialize)
+    monkeypatch.setattr(
+        config.distro, "find_ttfs", lambda extracted: [extracted / "font.ttf"]
+    )
+    monkeypatch.setattr("distrofonts.pipeline.render_ttf", lambda ttf, font_size: png)
+    monkeypatch.setattr("distrofonts.pipeline.trim_png", lambda path: None)
+
     assert run(config) == 0
     assert built == ["ttf-new"]
     text = (dist / "index.html").read_text(encoding="utf-8")
@@ -201,32 +226,7 @@ def test_run_fetch_clones_missing(
     png.write_bytes(b"png")
     cloned: list[str] = []
 
-    def fake_refresh(dest: Path):
-        from archfonts.fetch import AurPackage, write_ranking
-
-        packages = [AurPackage("ttf-cloned", 9)]
-        write_ranking(dest / "ranking.json", packages)
-        return packages
-
-    def fake_clone(name: str, dest: Path, update: bool) -> str:
-        cloned.append(name)
-        (dest / name).mkdir()
-        (dest / name / ".git").mkdir()
-        (dest / name / "PKGBUILD").write_text("pkgname=ttf-cloned\n", encoding="utf-8")
-        return "cloned"
-
-    monkeypatch.setattr("archfonts.cli.refresh_ranking", fake_refresh)
-    monkeypatch.setattr("archfonts.cli.clone_package", fake_clone)
-    monkeypatch.setattr("archfonts.package.ArchFontPackage.build", lambda self: 0)
-    monkeypatch.setattr("archfonts.package.ArchFontPackage.extract", lambda self: None)
-    monkeypatch.setattr(
-        "archfonts.package.ArchFontPackage.find_ttfs",
-        lambda self: [source / self.pkg_name / "font.ttf"],
-    )
-    monkeypatch.setattr("archfonts.cli.render_ttf", lambda ttf, font_size: png)
-    monkeypatch.setattr("archfonts.cli.trim_png", lambda path: None)
-
-    config = parse_args(
+    config = parse_generate_args(
         [
             "--source-dir",
             str(source),
@@ -240,7 +240,33 @@ def test_run_fetch_clones_missing(
             "--no-resume",
         ]
     )
+
+    def fake_refresh(dest: Path):
+        packages = [RankedPackage("ttf-cloned", 9)]
+        write_ranking(dest / "ranking.json", packages)
+        return packages
+
+    def fake_clone(name: str, dest: Path, *, update: bool = False) -> str:
+        del update
+        cloned.append(name)
+        (dest / name).mkdir()
+        (dest / name / ".git").mkdir()
+        (dest / name / "PKGBUILD").write_text("pkgname=ttf-cloned\n", encoding="utf-8")
+        return "cloned"
+
+    monkeypatch.setattr(config.distro, "refresh_ranking", fake_refresh)
+    monkeypatch.setattr(config.distro, "ensure_source", fake_clone)
+    monkeypatch.setattr(
+        config.distro, "materialize", lambda *a, **k: source / "ttf-cloned"
+    )
+    monkeypatch.setattr(
+        config.distro, "find_ttfs", lambda extracted: [extracted / "font.ttf"]
+    )
+    monkeypatch.setattr("distrofonts.pipeline.render_ttf", lambda ttf, font_size: png)
+    monkeypatch.setattr("distrofonts.pipeline.trim_png", lambda path: None)
+
     assert run(config) == 0
+    assert cloned == ["ttf-cloned"]
     assert "ttf-cloned" in (tmp_path / "dist" / "index.html").read_text(
         encoding="utf-8"
     )
@@ -254,7 +280,7 @@ def test_run_records_missing_pkgbuild(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     dist = tmp_path / "dist"
-    config = parse_args(
+    config = parse_generate_args(
         [
             "--source-dir",
             str(source),
@@ -272,7 +298,7 @@ def test_run_records_missing_pkgbuild(tmp_path: Path) -> None:
 
 
 def test_run_missing_source_returns_error(tmp_path: Path) -> None:
-    config = parse_args(
+    config = parse_generate_args(
         [
             "--source-dir",
             str(tmp_path / "missing"),

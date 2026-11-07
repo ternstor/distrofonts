@@ -12,11 +12,12 @@ from urllib.parse import quote
 
 GENERATED_MARK = "<!-- GENERATED -->"
 CONTENT_MARK = "<!-- CONTENT -->"
+TITLE_MARK = "<!-- TITLE -->"
 
 
 def template_text() -> str:
     """Load the packaged HTML template."""
-    resource = files("archfonts").joinpath("templates", "index.html")
+    resource = files("distrofonts").joinpath("templates", "index.html")
     try:
         return resource.read_text(encoding="utf-8")
     except FileNotFoundError:
@@ -28,6 +29,7 @@ def write_index(
     ttfs: Mapping[str, Sequence[Path]],
     output_dir: Path,
     *,
+    title: str = "Font previews",
     generated_at: datetime | None = None,
 ) -> Path:
     """Copy PNGs under ``output_dir`` and write ``index.html``."""
@@ -50,6 +52,7 @@ def write_index(
         sections.append(f"<h2>{escape(pkg_name)}</h2>\n<ul>\n{body}\n</ul>")
 
     html = template_text()
+    html = html.replace(TITLE_MARK, escape(title))
     html = html.replace(GENERATED_MARK, escape(stamp))
     html = html.replace(CONTENT_MARK, "\n".join(sections))
     index = output_dir / "index.html"

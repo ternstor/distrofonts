@@ -1,0 +1,3 @@
+# Extra package names to skip at generate time, one per line.
+# Vendor installers (names ending in -installer) are already dropped
+# by the Debian adapter.

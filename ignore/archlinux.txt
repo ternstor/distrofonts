@@ -1,3 +1,3 @@
 # Extra package names to skip at generate time, one per line.
 # Proprietary Microsoft/Apple/WPS families are already dropped by
-# archfonts-fetch. ttf-win10 is always ignored in code.
+# the Arch adapter. ttf-win10 is always ignored in code.

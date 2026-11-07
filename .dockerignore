@@ -2,6 +2,7 @@
 .venv
 dist
 aur
+debian
 .pages
 **/__pycache__
 .pytest_cache

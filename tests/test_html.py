@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 from pathlib import Path
 
-from archfonts.html import write_index
+from distrofonts.html import write_index
 
 
 def test_write_index_escapes_names_and_copies_pngs(tmp_path: Path) -> None:
@@ -13,11 +13,13 @@ def test_write_index_escapes_names_and_copies_pngs(tmp_path: Path) -> None:
     index = write_index(
         {"<script>": [source]},
         output,
+        title="Arch fonts",
         generated_at=datetime(2026, 11, 5, 7, 0, tzinfo=UTC),
     )
     text = index.read_text(encoding="utf-8")
 
     assert index == output / "index.html"
+    assert "<title>Arch fonts</title>" in text
     assert "<h2>&lt;script&gt;</h2>" in text
     assert "<script>" not in text
     assert 'src="png/%3Cscript%3E/a.png"' in text
@@ -42,9 +44,11 @@ def test_write_index_keeps_mapping_order(tmp_path: Path) -> None:
     text = write_index(
         {"ttf-b": [png], "ttf-a": [png]},
         output,
+        title="Debian fonts",
         generated_at=datetime(2026, 11, 5, tzinfo=UTC),
     ).read_text(encoding="utf-8")
     assert text.find("ttf-b") < text.find("ttf-a")
+    assert "<title>Debian fonts</title>" in text
 
 
 def test_write_index_allows_in_place_pngs(tmp_path: Path) -> None:

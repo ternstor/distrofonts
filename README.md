@@ -1,53 +1,60 @@
-# Archfonts
+# Distrofonts
 
-Archfonts builds [Arch Linux](https://archlinux.org/) AUR font packages and writes PNG previews of the TTF files into an HTML index.
+Distrofonts builds PNG previews of popular TTF font packages from Linux distributions and writes them into an HTML index. Arch Linux AUR `ttf-*` packages and Debian `fonts-*` / `ttf-*` packages share one generate loop; each distro supplies ranking, fetch, and extract.
 
 The source is released under the MIT license.
 
 ## Repeatable Docker run
 
-The supported way to generate the index is the Arch Linux image plus Make. By default this keeps going down the AUR vote ranking until **100 successful** packages are in `dist/`, skipping Microsoft/Apple/WPS families that need local vendor files. Failed packages are skipped on later runs; already-rendered PNGs are reused.
+The supported way to generate an index is the distro image plus Make. By default this keeps going down the popularity ranking until **100 successful** packages are in `dist/<distro>/`. Failed packages are skipped on later runs; already-rendered PNGs are reused.
 
 ```bash
-make generate
+make generate                     # Arch Linux (default)
+make generate DISTRO=debian       # Debian
 ```
 
-That builds the image if needed, clones any missing packages into `aur/`, and writes `dist/index.html` plus `dist/png/`. Interrupted runs resume from whatever is already in `dist/`. `aur/` and `dist/` are gitignored.
+That builds the image if needed, fetches missing packages into `aur/` or `debian/`, and writes `dist/<distro>/index.html` plus `dist/<distro>/png/`. Interrupted runs resume from whatever is already in `dist/<distro>/`. `aur/`, `debian/`, and `dist/` are gitignored.
 
 ```bash
-make generate TARGET=100          # fill until 100 successes (default)
-make generate TARGET=100 LIMIT=5  # at most 5 new attempts this run
-make generate RESUME=0            # rebuild instead of reusing dist/png
-make generate FETCH=0             # do not clone more AUR packages
-make generate RETRY_FAILURES=1    # retry names in dist/failures.txt
-make fetch TOP=100                # clone the top 100 ranked PKGBUILDs
-make publish                      # commit dist/ onto gh-pages locally; does not push
+make generate TARGET=100                    # fill until 100 successes (default)
+make generate TARGET=100 LIMIT=5            # at most 5 ranked names this run
+make generate RESUME=0                      # rebuild instead of reusing png/
+make generate FETCH=0                       # do not fetch more packages
+make generate RETRY_FAILURES=1              # retry names in failures.txt
+make generate DISTRO=debian TARGET=100
+make fetch TOP=100                          # cache the top 100 ranked sources
+make pages                                  # copy Arch output into ternstor.github.io
+make pages DISTRO=debian
 ```
 
-`make fetch UPDATE=1` runs `git pull` on clones that already exist. Failed packages from a generate run are listed in `dist/failures.txt`. `ignore.txt` is extra skip-list input; proprietary families are filtered in `archfonts-fetch` before clone.
+`make fetch UPDATE=1` refreshes cached sources. Failed packages from a generate run are listed in `dist/<distro>/failures.txt`. `ignore/<distro>.txt` is extra skip-list input.
 
-The image is Arch Linux (`linux/amd64`) with `ttf2png`, ImageMagick, and this package. It runs as `builder`. On Apple Silicon, Docker Desktop emulates that platform. Containers use `--dns 8.8.8.8 --dns 1.1.1.1` so lookups do not go through Docker Desktop's VM resolver, which times out during long `makepkg` download runs. Serve the output with:
+Arch runs in `archlinux:base-devel` (`linux/amd64`) with AUR `ttf2png`. Debian runs in `debian:stable` and builds `ttf2png` from source. Both include ImageMagick and this package, and run as `builder`. Containers use `--dns 8.8.8.8 --dns 1.1.1.1` so lookups do not go through Docker Desktop's VM resolver.
 
 ```bash
-python -m http.server -d dist
+python -m http.server -d dist/archlinux
+python -m http.server -d dist/debian
 ```
 
-GitHub Pages can host `dist/` from the `gh-pages` branch. `index.html` uses relative image URLs and writes `.nojekyll` so Jekyll does not drop `_`-prefixed files. After `make publish`:
-
-```bash
-git -C .pages push origin gh-pages
-```
+`index.html` uses relative image URLs and writes `.nojekyll` so GitHub Pages / Jekyll does not drop `_`-prefixed files. `make pages DISTRO=<distro>` copies into `../ternstor.github.io/distrofonts/<distro>/`.
 
 ## Usage without Make
 
 ```bash
-archfonts-fetch --dest aur --top 100
-archfonts --source-dir aur --output-dir dist --target 100 --resume --fetch
+distrofonts fetch --distro archlinux --dest aur --top 100
+distrofonts generate --distro archlinux --source-dir aur --output-dir dist/archlinux --target 100 --resume --fetch
+
+distrofonts fetch --distro debian --dest debian --top 100
+distrofonts generate --distro debian --source-dir debian --output-dir dist/debian --target 100 --resume --fetch
 ```
 
-`--target N` continues until N packages have previews. `--resume` / `--no-resume` reuse or ignore existing PNGs. `--fetch` clones the next most-voted packages as needed. `--retry-failures` retries `failures.txt` instead of skipping those names. `--limit N` caps new attempts in this run.
+`archfonts` and `archfonts-fetch` remain as aliases that imply `--distro archlinux`.
 
-`--skip-integrity` passes `--skipchecksums`, `--skipinteg`, and `--skippgpcheck` to `makepkg`. The default build verifies checksums and signatures. Package archives may be `.pkg.tar.zst`, `.pkg.tar.xz`, or `.pkg.tar.gz`.
+`--target N` continues until N packages have previews. `--resume` / `--no-resume` reuse or ignore existing PNGs. `--fetch` refreshes ranking and caches the next packages as needed. `--retry-failures` retries `failures.txt` instead of skipping those names. `--limit N` caps how far down the ranking this run considers.
+
+`--skip-integrity` passes `--skipchecksums`, `--skipinteg`, and `--skippgpcheck` to `makepkg` (Arch only). Debian obtains packages with `apt-get download` and `dpkg-deb -x` instead of installing them.
+
+Arch ranking is AUR vote count for `ttf-*`, skipping Microsoft/Apple/WPS vendor families. Debian ranking is popcon `inst` counts for `fonts-*` and leftover `ttf-*`, skipping `*-installer` packages.
 
 ## Development
 

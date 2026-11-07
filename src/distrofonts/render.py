@@ -6,9 +6,9 @@ import logging
 import shutil
 from pathlib import Path
 
-from archfonts.package import ArchFontError, run_command
+from distrofonts.process import FontError, run_command
 
-LOGGER = logging.getLogger("archfonts.render")
+LOGGER = logging.getLogger("distrofonts.render")
 
 
 def png_path_for(ttf: Path) -> Path:
@@ -24,7 +24,7 @@ def trim_command(png: Path) -> list[str]:
     convert = shutil.which("convert")
     if convert:
         return [convert, "-trim", str(png), str(png)]
-    raise ArchFontError("ImageMagick not found")
+    raise FontError("ImageMagick not found")
 
 
 def render_ttf(ttf: Path, font_size: int) -> Path | None:
@@ -40,4 +40,4 @@ def trim_png(png: Path) -> None:
     """Trim whitespace from a PNG with ImageMagick."""
     command = trim_command(png)
     if run_command(command, png.parent, LOGGER) != 0:
-        raise ArchFontError(f"failed to trim {png}")
+        raise FontError(f"failed to trim {png}")

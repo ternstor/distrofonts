@@ -35,5 +35,5 @@ RUN python -m venv /opt/venv \
 USER builder
 WORKDIR /opt/distrofonts
 ENV PATH="/opt/venv/bin:${PATH}"
-ENTRYPOINT ["archfonts"]
-CMD ["--help"]
+ENTRYPOINT ["distrofonts"]
+CMD ["generate", "--help"]

@@ -4,13 +4,15 @@ from pathlib import Path
 
 import pytest
 
-from archfonts.fetch import (
-    AurPackage,
+from distrofonts.distros.archlinux import (
     clone_package,
     is_proprietary,
+    parse_search_results,
+)
+from distrofonts.ranking import (
+    RankedPackage,
     load_ranking,
     order_by_ranking,
-    parse_search_results,
     ranking_payload,
     select_top,
     write_ranking,
@@ -48,9 +50,9 @@ def test_parse_search_results_filters_and_sorts() -> None:
 
 def test_select_top_and_ranking_roundtrip(tmp_path: Path) -> None:
     packages = [
-        AurPackage("ttf-a", 5),
-        AurPackage("ttf-b", 4),
-        AurPackage("ttf-c", 3),
+        RankedPackage("ttf-a", 5),
+        RankedPackage("ttf-b", 4),
+        RankedPackage("ttf-c", 3),
     ]
     selected = select_top(packages, 2)
     assert [pkg.name for pkg in selected] == ["ttf-a", "ttf-b"]
@@ -79,7 +81,7 @@ def test_clone_package_skips_existing(
     def fake_run(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
         raise AssertionError("git should not run when skipping")
 
-    monkeypatch.setattr("archfonts.fetch.subprocess.run", fake_run)
+    monkeypatch.setattr("distrofonts.distros.archlinux.subprocess.run", fake_run)
     assert clone_package("ttf-demo", tmp_path, update=False) == "skipped"
 
 
@@ -99,7 +101,7 @@ def test_clone_package_clones_missing(
         (dest / "PKGBUILD").write_text("pkgname=ttf-demo\n", encoding="utf-8")
         return subprocess.CompletedProcess(command, 0, "", "")
 
-    monkeypatch.setattr("archfonts.fetch.subprocess.run", fake_run)
+    monkeypatch.setattr("distrofonts.distros.archlinux.subprocess.run", fake_run)
     assert clone_package("ttf-demo", tmp_path, update=False) == "cloned"
     assert (tmp_path / "ttf-demo" / "PKGBUILD").is_file()
 
@@ -120,7 +122,7 @@ def test_clone_package_rejects_empty_repo(
             command, 0, "", "warning: cloned an empty repository.\n"
         )
 
-    monkeypatch.setattr("archfonts.fetch.subprocess.run", fake_run)
+    monkeypatch.setattr("distrofonts.distros.archlinux.subprocess.run", fake_run)
     assert clone_package("ttf-empty", tmp_path, update=False) == "failed"
     assert not (tmp_path / "ttf-empty").exists()
 
@@ -143,6 +145,6 @@ def test_clone_package_reclones_broken(
         (dest / "PKGBUILD").write_text("pkgname=ttf-demo\n", encoding="utf-8")
         return subprocess.CompletedProcess(command, 0, "", "")
 
-    monkeypatch.setattr("archfonts.fetch.subprocess.run", fake_run)
+    monkeypatch.setattr("distrofonts.distros.archlinux.subprocess.run", fake_run)
     assert clone_package("ttf-demo", tmp_path, update=False) == "cloned"
     assert (repo / "PKGBUILD").is_file()

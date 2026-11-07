@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 
-from archfonts.package import ArchFontError
-from archfonts.render import render_ttf, trim_command, trim_png
+from distrofonts.process import FontError
+from distrofonts.render import render_ttf, trim_command, trim_png
 
 
 def test_render_ttf_uses_font_size(
@@ -24,7 +24,7 @@ def test_render_ttf_uses_font_size(
         assert capture_output and text and not check
         return subprocess.CompletedProcess(command, 0, "", "")
 
-    monkeypatch.setattr("archfonts.package.subprocess.run", fake_run)
+    monkeypatch.setattr("distrofonts.process.subprocess.run", fake_run)
     ttf = tmp_path / "a.ttf"
     ttf.write_bytes(b"font")
 
@@ -44,7 +44,7 @@ def test_render_ttf_failure_returns_none(
     ) -> subprocess.CompletedProcess[str]:
         return subprocess.CompletedProcess(command, 1, "", "boom")
 
-    monkeypatch.setattr("archfonts.package.subprocess.run", fake_run)
+    monkeypatch.setattr("distrofonts.process.subprocess.run", fake_run)
     ttf = tmp_path / "a.ttf"
     ttf.write_bytes(b"font")
     assert render_ttf(ttf, 20) is None
@@ -58,7 +58,7 @@ def test_trim_command_prefers_magick(
             return "/usr/bin/magick"
         return "/usr/bin/convert"
 
-    monkeypatch.setattr("archfonts.render.shutil.which", which)
+    monkeypatch.setattr("distrofonts.render.shutil.which", which)
     png = tmp_path / "a.png"
     assert trim_command(png) == ["/usr/bin/magick", str(png), "-trim", str(png)]
 
@@ -71,7 +71,7 @@ def test_trim_command_falls_back_to_convert(
             return "/usr/bin/convert"
         return None
 
-    monkeypatch.setattr("archfonts.render.shutil.which", which)
+    monkeypatch.setattr("distrofonts.render.shutil.which", which)
     png = tmp_path / "a.png"
     assert trim_command(png) == ["/usr/bin/convert", "-trim", str(png), str(png)]
 
@@ -79,8 +79,8 @@ def test_trim_command_falls_back_to_convert(
 def test_trim_command_requires_imagemagick(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    monkeypatch.setattr("archfonts.render.shutil.which", lambda name: None)
-    with pytest.raises(ArchFontError, match="ImageMagick not found"):
+    monkeypatch.setattr("distrofonts.render.shutil.which", lambda name: None)
+    with pytest.raises(FontError, match="ImageMagick not found"):
         trim_command(tmp_path / "a.png")
 
 
@@ -90,7 +90,7 @@ def test_trim_png_runs_command(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) 
     seen: list[list[str]] = []
 
     monkeypatch.setattr(
-        "archfonts.render.trim_command",
+        "distrofonts.render.trim_command",
         lambda path: ["magick", str(path), "-trim", str(path)],
     )
 
@@ -104,6 +104,6 @@ def test_trim_png_runs_command(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) 
         seen.append(command)
         return subprocess.CompletedProcess(command, 0, "", "")
 
-    monkeypatch.setattr("archfonts.package.subprocess.run", fake_run)
+    monkeypatch.setattr("distrofonts.process.subprocess.run", fake_run)
     trim_png(png)
     assert seen == [["magick", str(png), "-trim", str(png)]]
